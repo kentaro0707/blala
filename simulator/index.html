@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DRYSUITS Graphite α カラーシミュレーター</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container">
+    <!-- ヘッダー -->
+    <header class="header">
+      <h1>DRYSUITS Graphite α</h1>
+      <p class="subtitle">カラーシミュレーター</p>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <main class="main">
+      <!-- プレビューセクション -->
+      <section class="preview-section">
+        <h2>プレビュー</h2>
+        <div class="canvas-container">
+          <canvas id="previewCanvas"></canvas>
+        </div>
+        <div class="preview-actions">
+          <button id="resetButton" class="action-button secondary">
+            <span class="icon">↺</span>
+            初期状態に戻す
+          </button>
+          <button id="exportButton" class="action-button primary">
+            <span class="icon">⬇</span>
+            PNGで保存
+          </button>
+        </div>
+      </section>
+
+      <!-- コントロールパネル -->
+      <section class="control-section">
+        <h2>カラー選択</h2>
+        <div id="colorPalettes" class="color-palettes">
+          <!-- パーツごとのパレットがJSで生成されます -->
+        </div>
+      </section>
+    </main>
+
+    <!-- フッター -->
+    <footer class="footer">
+      <p>© 2026 DRYSUITS Graphite α Color Simulator</p>
+    </footer>
+  </div>
+
+  <!-- スクリプト読み込み -->
+  <script src="js/palette.js"></script>
+  <script src="js/colorizer.js"></script>
+  <script src="js/simulator.js"></script>
+</body>
+</html>
