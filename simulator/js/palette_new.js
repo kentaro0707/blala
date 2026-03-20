@@ -1,13 +1,3 @@
-/**
- * カラーパレットデータ定義
- *
- * このファイルで色の追加・変更・削除を行えます
- * 各色は以下のプロパティを持ちます：
- * - code: 品番コード（省略形、URL保存などに使用）
- * - name: 色の表示名
- * - hex: 16進数カラーコード
- */
-
 const COLOR_PALETTE = [
   { code: 'NVY', name: 'Nvy', hex: '#030c4c' },
   { code: 'BLK', name: 'Blk', hex: '#221f20' },
@@ -49,23 +39,5 @@ const COLOR_PALETTE = [
   { code: 'MST', name: 'Mst', hex: '#d9d9d9' },
   { code: 'KYEL', name: 'Kyel', hex: '#eae868' },
   { code: 'zebra', name: 'Zebra', hex: '#f5f5f5' },
-  { code: 'WHT', name: 'Wht', hex: '#ffffff' }
+  { code: 'WHT', name: 'Wht', hex: '#ffffff' },
 ];
-
-/**
- * パレット内の色を品番コードから検索
- * @param {string} code - 品番コード
- * @returns {Object|null} 色オブジェクト、見つからない場合はnull
- */
-function findColorByCode(code) {
-  return COLOR_PALETTE.find(c => c.code === code) || null;
-}
-
-/**
- * パレット内の色をHEX値から検索
- * @param {string} hex - 16進数カラーコード
- * @returns {Object|null} 色オブジェクト、見つからない場合はnull
- */
-function findColorByHex(hex) {
-  return COLOR_PALETTE.find(c => c.hex.toLowerCase() === hex.toLowerCase()) || null;
-}

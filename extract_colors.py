@@ -3,7 +3,7 @@
 カラーシミュレーターの色データ抽出スクリプト
 
 カラー一覧/一覧/ フォルダにあるPNG画像から以下を抽出:
-- code: ファイル名（拡張子除く）
+- code: ファイル名（拡張子除く、日本語は英語に変換）
 - name: ファイル名から変換（スネークケース→スペース区切り＋先頭大文字）
 - hex: 画像の中央領域（中央20%）のピクセル値の中央値
 """
@@ -13,6 +13,14 @@ import re
 from pathlib import Path
 from PIL import Image
 import numpy as np
+
+
+# 日本語ファイル名のマッピング
+JA_NAME_MAP = {
+    'スムーススキン': 'smooth_skin',
+    'メッシスキン': 'mesh_skin',
+    'ワイン': 'wine'
+}
 
 
 def snake_to_title(name: str) -> str:
@@ -34,8 +42,14 @@ def extract_median_hex(image_path: Path) -> str:
     """
     img = Image.open(image_path)
 
-    # RGBモードに変換（必要な場合）
-    if img.mode != 'RGB':
+    # RGBAの場合、アルファチャンネルを考慮
+    has_alpha = img.mode == 'RGBA'
+    if has_alpha:
+        # RGBモードに変換（透明ピクセルは黒に）
+        background = Image.new('RGB', img.size, (0, 0, 0))
+        background.paste(img, mask=img.split()[3])
+        img = background
+    elif img.mode != 'RGB':
         img = img.convert('RGB')
 
     # NumPy配列に変換
@@ -70,16 +84,20 @@ def process_images(source_dir: Path) -> list[dict]:
     color_data = []
 
     # 除外ファイルリスト
-    exclude_files = {'preview_all.png', 'preview_all.jpg', 'preview_all.jpeg'}
+    exclude_files = {'.DS_Store', 'preview_all.png', 'preview_all.jpg', 'preview_all.jpeg'}
 
     # 全PNGファイルを処理
     for image_file in sorted(source_dir.glob('*.png')):
         # 除外ファイルをスキップ
-        if image_file.name.lower() in exclude_files:
+        if image_file.name in exclude_files:
             continue
 
         # code: ファイル名（拡張子除く）
         code = image_file.stem
+
+        # 日本語ファイル名を英語に変換
+        if code in JA_NAME_MAP:
+            code = JA_NAME_MAP[code]
 
         # name: スネークケースをタイトルケースに変換
         name = snake_to_title(code)
@@ -117,6 +135,13 @@ def generate_javascript_palette(color_data: list[dict]) -> str:
     return '\n'.join(lines)
 
 
+def hex_to_brightness(hex_value: str) -> int:
+    """HEX色の明度を計算（0-255）"""
+    hex_value = hex_value.lstrip('#')
+    r, g, b = int(hex_value[0:2], 16), int(hex_value[2:4], 16), int(hex_value[4:6], 16)
+    return int(0.299 * r + 0.587 * g + 0.114 * b)
+
+
 def main():
     # カレントディレクトリのベースを取得
     base_dir = Path(__file__).parent
@@ -129,7 +154,7 @@ def main():
         return
 
     print(f"処理対象フォルダ: {source_dir}")
-    print(f"除外ファイル: preview_all.png")
+    print(f"除外ファイル: .DS_Store, preview_all.png")
     print()
 
     # 色データを抽出
@@ -138,8 +163,11 @@ def main():
     print()
     print(f"合計 {len(color_data)} 色を抽出しました")
 
+    # 明るさ順にソート
+    color_data_sorted = sorted(color_data, key=lambda x: hex_to_brightness(x['hex']))
+
     # JavaScriptパレットコードを生成
-    js_palette = generate_javascript_palette(color_data)
+    js_palette = generate_javascript_palette(color_data_sorted)
 
     # 出力ファイルに保存
     output_file = base_dir / 'simulator' / 'js' / 'palette_new.js'
@@ -150,25 +178,29 @@ def main():
     # INITIAL_COLORSの候補も出力
     print("\n--- INITIAL_COLORS 候補（各色相から代表色を選定）---")
 
-    # 黒系・暗色
-    dark_candidates = [c for c in color_data if c['hex'] < '#404040']
-    if dark_candidates:
-        print(f"// 黒系・暗色: {dark_candidates[0]['code']} ({dark_candidates[0]['hex']})")
+    # 暗色（黒系）
+    dark = [c for c in color_data if hex_to_brightness(c['hex']) < 80]
+    if dark:
+        cand = max(dark, key=lambda x: hex_to_brightness(x['hex']))
+        print(f"// 暗色: {cand['code']} ({cand['hex']})")
 
-    # 白系・明色
-    light_candidates = [c for c in color_data if c['hex'] > '#c0c0c0']
-    if light_candidates:
-        print(f"// 白系・明色: {light_candidates[0]['code']} ({light_candidates[0]['hex']})")
+    # 明色（白系）
+    light = [c for c in color_data if hex_to_brightness(c['hex']) > 200]
+    if light:
+        cand = min(light, key=lambda x: hex_to_brightness(x['hex']))
+        print(f"// 明色: {cand['code']} ({cand['hex']})")
 
-    # ベージュ系
-    beige_candidates = [c for c in color_data if 'd4c4a8' <= c['hex'] <= 'e8d8b8' or 'beige' in c['name'].lower()]
-    if beige_candidates:
-        print(f"// ベージュ系: {beige_candidates[0]['code']} ({beige_candidates[0]['hex']})")
+    # 中間色（ベージュ/カーキ系）
+    mid_light = [c for c in color_data if 120 <= hex_to_brightness(c['hex']) <= 180]
+    if mid_light:
+        cand = mid_light[0]
+        print(f"// 中間色: {cand['code']} ({cand['hex']})")
 
     # グレー系
-    gray_candidates = [c for c in color_data if 'gray' in c['name'].lower() or 'grey' in c['name'].lower()]
-    if gray_candidates:
-        print(f"// グレー系: {gray_candidates[0]['code']} ({gray_candidates[0]['hex']})")
+    mid_dark = [c for c in color_data if 80 <= hex_to_brightness(c['hex']) < 120]
+    if mid_dark:
+        cand = mid_dark[0]
+        print(f"// 中間暗色: {cand['code']} ({cand['hex']})")
 
 
 if __name__ == '__main__':

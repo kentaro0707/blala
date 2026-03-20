@@ -37,10 +37,10 @@ let baseImage = null;
 
 // 初期色設定（ベース画像に合わせて調整）
 const INITIAL_COLORS = {
-  A: { code: 'swatch_03_01', hex: '#878282' },  // Gray
-  B: { code: 'swatch_01_02', hex: '#ffffff' },  // White
-  C: { code: 'coyote', hex: '#bd9c72' },        // Beige
-  D: { code: 'swatch_03_10', hex: '#373837' }   // Dark Gray
+  A: { code: 'BLK', hex: '#221f20' },    // 黒系
+  B: { code: 'WHT', hex: '#ffffff' },    // 白系
+  C: { code: 'CYT', hex: '#bd9c72' },    // ベージュ系
+  D: { code: 'MBLK', hex: '#878282' }    // グレー系
 };
 
 // 現在の選択色状態
