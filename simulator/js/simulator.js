@@ -92,11 +92,16 @@ async function loadImages() {
   // ベース画像を読み込み
   const basePromise = new Promise((resolve, reject) => {
     const img = new Image();
+    img.crossOrigin = 'anonymous';
     img.onload = () => {
       baseImage = img;
+      console.log('ベース画像読み込み完了:', img.width, 'x', img.height);
       resolve();
     };
-    img.onerror = () => reject(new Error('ベース画像の読み込みに失敗しました'));
+    img.onerror = (e) => {
+      console.error('ベース画像の読み込みに失敗:', e);
+      reject(new Error('ベース画像の読み込みに失敗しました'));
+    };
     img.src = `../DRYSUITS Graphite α.png`;
   });
   loadPromises.push(basePromise);
@@ -105,8 +110,10 @@ async function loadImages() {
   for (const part of ['A', 'B', 'C', 'D']) {
     const promise = new Promise((resolve, reject) => {
       const img = new Image();
+      img.crossOrigin = 'anonymous';
       img.onload = () => {
         partImages[part] = img;
+        console.log(`${part}パーツ画像読み込み完了:`, img.width, 'x', img.height);
 
         // オフスクリーンCanvasのサイズを設定
         offscreenCanvas[part].width = img.width;
@@ -114,7 +121,10 @@ async function loadImages() {
 
         resolve();
       };
-      img.onerror = () => reject(new Error(`${part}-parts.png の読み込みに失敗しました`));
+      img.onerror = (e) => {
+        console.error(`${part}-parts.png の読み込みに失敗:`, e);
+        reject(new Error(`${part}-parts.png の読み込みに失敗しました`));
+      };
       img.src = `../parts/${part}-parts.png`;
     });
     loadPromises.push(promise);
@@ -122,7 +132,7 @@ async function loadImages() {
 
   try {
     await Promise.all(loadPromises);
-    console.log('画像を読み込みました');
+    console.log('全画像を読み込みました');
   } catch (error) {
     console.error('画像読み込みエラー:', error);
     alert('画像の読み込みに失敗しました');
@@ -260,12 +270,17 @@ function updatePreview() {
  * @param {string} colorHex - 色コード
  */
 function drawPart(part, colorHex) {
-  if (!partImages[part]) return;
+  if (!partImages[part]) {
+    console.warn(`${part}パーツ画像がありません`);
+    return;
+  }
 
   const img = partImages[part];
   const ctx = offscreenCtx[part];
   const canvas = offscreenCanvas[part];
   const partInfo = PARTS[part];
+
+  console.log(`${part}パーツ描画開始、色: ${colorHex}`);
 
   // オフスクリーンCanvasに元画像を描画
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -273,10 +288,17 @@ function drawPart(part, colorHex) {
 
   // 画像データを取得
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  console.log(`${part}パーツ画像データ: ${imageData.width}x${imageData.height}, ピクセル数: ${imageData.data.length / 4}`);
 
-  // 色変換を適用（Bパーツのみ黒保護有効）
-  const preserveBlack = (part === 'B');
-  const convertedData = applyColorToImageData(imageData, colorHex, preserveBlack);
+  // 最初の数ピクセルの色を確認
+  let nonTransparentCount = 0;
+  for (let i = 0; i < Math.min(1000, imageData.data.length); i += 4) {
+    if (imageData.data[i + 3] > 0) nonTransparentCount++;
+  }
+  console.log(`${part}パーツ: 最初の1000ピクセル中、不透明ピクセル数: ${nonTransparentCount}`);
+
+  // 色変換を適用（黒保護なし）
+  const convertedData = applyColorToImageData(imageData, colorHex, false);
 
   // 変換後の画像データをオフスクリーンCanvasに描画
   ctx.putImageData(convertedData, 0, 0);
@@ -287,6 +309,8 @@ function drawPart(part, colorHex) {
     partInfo.offsetX,
     partInfo.offsetY
   );
+
+  console.log(`${part}パーツ描画完了`);
 }
 
 /**
