@@ -107,3 +107,86 @@ function getColorizedImageData(sourceCanvas, targetHex, preserveBlack = true) {
   const imageData = ctx.getImageData(0, 0, sourceCanvas.width, sourceCanvas.height);
   return applyColorToImageData(imageData, targetHex, preserveBlack);
 }
+
+/**
+ * Bパーツ用：白い部分のみを色変更し、黒い線を保護する
+ * 白い部分（明るいピクセル）を目標色に置き換え、黒い線はそのまま保持
+ *
+ * @param {number} srcR - 元のRed (0-255)
+ * @param {number} srcG - 元のGreen (0-255)
+ * @param {number} srcB - 元のBlue (0-255)
+ * @param {number} srcA - 元のAlpha (0-255)
+ * @param {string} targetHex - 目標色のHEXコード
+ * @returns {Object} {r, g, b, a} 変換後の色
+ */
+function colorizeWhitePart(srcR, srcG, srcB, srcA, targetHex) {
+  // 透過ピクセルはそのまま透過させる
+  if (srcA === 0) {
+    return { r: 0, g: 0, b: 0, a: 0 };
+  }
+
+  // 黒い線の判定（暗いピクセルは保護）
+  const brightness = (srcR + srcG + srcB) / 3;
+  if (brightness < 30) {
+    // 黒い線は元のまま保護
+    return { r: srcR, g: srcG, b: srcB, a: srcA };
+  }
+
+  // 目標色のRGBを取得
+  const targetRgb = hexToRgb(targetHex);
+  if (!targetRgb) {
+    return { r: srcR, g: srcG, b: srcB, a: srcA };
+  }
+
+  // 白い部分（brightnessが高い）ほど、目標色を濃く表示
+  // 黒に近い部分は薄く、白に近い部分は濃く目標色を適用
+  const intensity = brightness / 255;
+
+  // 目標色に強度を適用
+  const r = Math.round(targetRgb.r * intensity);
+  const g = Math.round(targetRgb.g * intensity);
+  const b = Math.round(targetRgb.b * intensity);
+
+  return { r, g, b, a: srcA };
+}
+
+/**
+ * Bパーツ用：白い部分のみ色変換を適用（黒い線を保護）
+ * @param {ImageData} imageData - 変換対象のImageData
+ * @param {string} targetHex - 目標色のHEXコード
+ * @returns {ImageData} 変換後のImageData
+ */
+function applyColorToWhiteParts(imageData, targetHex) {
+  const data = imageData.data;
+
+  let changedPixels = 0;
+  let protectedPixels = 0;
+
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+    const a = data[i + 3];
+
+    // 透過ピクセルはスキップ
+    if (a === 0) continue;
+
+    // 色変換を適用（黒い線は保護される）
+    const converted = colorizeWhitePart(r, g, b, a, targetHex);
+    data[i] = converted.r;
+    data[i + 1] = converted.g;
+    data[i + 2] = converted.b;
+    data[i + 3] = converted.a;
+
+    const brightness = (r + g + b) / 3;
+    if (brightness < 30) {
+      protectedPixels++;
+    } else {
+      changedPixels++;
+    }
+  }
+
+  console.log(`Bパーツ色変換完了: ${changedPixels}ピクセルを変更、${protectedPixels}ピクセル（黒線）を保護、目標色: ${targetHex}`);
+
+  return imageData;
+}
