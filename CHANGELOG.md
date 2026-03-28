@@ -7,8 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- CFCテクスチャ処理を追加: process_patterns.pyのPATTERNSリストにCFCを追加
+- `カラー一覧/一覧/processed/CFC_processed_thumb.png` (512x512) を生成
+
+### Fixed
+- BLEPとCFCのテクスチャパスを修正: `_processed.png` → `_processed_thumb.png`
+- CFCのシームレス化処理をスキップ: 四隅のボヤケた線を削除
+
 ### Changed
 
+- CFCパターンを迷彩柄（4色：濃緑、薄緑、ベージュ、黒）に変更
 - カラーシミュレーターの色選択機能を刷新：固定16色パレットから画像ファイルベースの41色パレットに変更
 - `simulator/js/palette.js`: COLOR_PALETTEを新しい画像ファイル名（ASH.png, BCF.png等）ベースのコード体系に更新
 - `simulator/js/simulator.js`: INITIAL_COLORSを新しいコード体系（BLK, WHT, CYT, MBLK）に更新

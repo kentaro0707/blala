@@ -138,11 +138,10 @@ function colorizeWhitePart(srcR, srcG, srcB, srcA, targetHex) {
     return { r: srcR, g: srcG, b: srcB, a: srcA };
   }
 
-  // 白い部分（brightnessが高い）ほど、目標色を濃く表示
-  // 黒に近い部分は薄く、白に近い部分は濃く目標色を適用
-  const intensity = brightness / 255;
+  // Aパーツと同じ明るさに変換（Aパーツの平均輝度128に合わせる）
+  const adjustedBrightness = 128;
+  const intensity = 1 - (adjustedBrightness / 255);
 
-  // 目標色に強度を適用
   const r = Math.round(targetRgb.r * intensity);
   const g = Math.round(targetRgb.g * intensity);
   const b = Math.round(targetRgb.b * intensity);

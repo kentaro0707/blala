@@ -1,0 +1,13 @@
+# ドライスーツカラーシミュレーター用 柄テクスチャ処理スクリプトの依存関係
+#
+# インストール方法:
+#   pip install -r requirements.txt
+
+# 画像処理
+Pillow>=9.0.0
+numpy>=1.21.0
+opencv-python>=4.5.0
+
+# 科学技術計算
+scipy>=1.7.0
+scikit-image>=0.19.0

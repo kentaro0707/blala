@@ -88,11 +88,10 @@ async function getTexture(code) {
     return null;
   }
 
-  // 縮小版テクスチャパスを使用
-  const thumbPath = color.texturePath.replace('.png', '_thumb.png');
+  // テクスチャパスをそのまま使用（512x512画像）
   // 絶対パスに変換（ブラウザでのパス解決問題を回避）
-  const absolutePath = new URL(thumbPath, window.location.href).href;
-  console.log(`テクスチャ読み込み開始: ${code}, パス: ${thumbPath}, 絶対パス: ${absolutePath}`);
+  const absolutePath = new URL(color.texturePath, window.location.href).href;
+  console.log(`テクスチャ読み込み開始: ${code}, パス: ${color.texturePath}, 絶対パス: ${absolutePath}`);
 
   const img = new Image();
   img.crossOrigin = 'anonymous';
