@@ -6,7 +6,7 @@ const COLOR_PALETTE = [
   { code: 'DGRN', name: 'Dgrn', hex: '#213e25' },
   { code: 'BCF', name: 'Bcf', hex: '#373837' },
   { code: 'RYL', name: 'Ryl', hex: '#2b3890' },
-  { code: 'mesh_skin', name: 'Mesh Skin', hex: '#3e3e3f' },
+  { code: 'mesh_skin', name: 'Mesh Skin', hex: '#3e3e3f', kind: 'texture', texturePath: '../カラー一覧/一覧/processed/mesh_skin_processed_thumb.png' },
   { code: 'ASH', name: 'Ash', hex: '#3e4445' },
   { code: 'SLT', name: 'Slt', hex: '#2a486d' },
   { code: 'wine', name: 'Wine', hex: '#822458' },

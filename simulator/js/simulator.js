@@ -143,7 +143,10 @@ function applySwatchStyle(swatch, color) {
   swatch.style.backgroundColor = color.hex;
   if (color.kind === 'texture') {
     // サムネイルを使用（元画像は巨大なため）
-    const thumbPath = color.texturePath.replace('.png', '_thumb.png');
+    // 既に_thumb.pngで終わる場合はそのまま使用
+    const thumbPath = color.texturePath.endsWith('_thumb.png')
+      ? color.texturePath
+      : color.texturePath.replace('.png', '_thumb.png');
     // 絶対パスに変換
     const absolutePath = new URL(thumbPath, window.location.href).href;
     swatch.style.backgroundImage = `url(${absolutePath})`;

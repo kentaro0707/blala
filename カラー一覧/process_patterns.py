@@ -16,7 +16,7 @@ import numpy as np
 from PIL import Image, ImageFilter
 
 # ===== 設定 =====
-THUMB_SIZE = 512  # 出力サムネイルサイズ
+THUMB_SIZE = 1024  # 出力サムネイルサイズ
 
 # BCF専用設定（繊細化パラメータ）
 BCF_TILE_FACTOR = 2  # タイリング係数（2=2x2配置）
@@ -36,7 +36,7 @@ INPUT_DIR = SCRIPT_DIR / "一覧"
 OUTPUT_DIR = INPUT_DIR / "processed"
 
 # 処理対象の柄
-PATTERNS = ['LEP', 'ASH', 'SEA', 'BCF', 'BLEP', 'CFC']
+PATTERNS = ['LEP', 'ASH', 'SEA', 'BCF', 'BLEP', 'CFC', 'mesh_skin']
 
 
 def tile_and_crop(img: Image.Image, factor: int, crop_size: int) -> Image.Image:
@@ -142,8 +142,11 @@ def process_pattern(code: str) -> bool:
     """
     print(f"\n--- {code} ---")
 
-    # 画像読み込み
-    input_path = INPUT_DIR / f"{code}.png"
+    # 画像読み込み - mesh_skinは日本語ファイル名を使用
+    if code == 'mesh_skin':
+        input_path = INPUT_DIR / "メッシスキン.png"
+    else:
+        input_path = INPUT_DIR / f"{code}.png"
     if not input_path.exists():
         print(f"[ERROR] {input_path} が見つかりません")
         return False
@@ -156,15 +159,19 @@ def process_pattern(code: str) -> bool:
     if code == 'BCF':
         print(f"[INFO] BCF繊細化処理開始")
 
-        # Step 1: 初期切り出し（メモリ削減）
-        crop_size = BCF_CROP_SIZE
-        left = (img.width - crop_size) // 2
-        top = (img.height - crop_size) // 2
-        img = img.crop((left, top, left + crop_size, top + crop_size))
-        print(f"[INFO] 初期切り出し完了: {img.size}")
+        # Step 1: 初期切り出し（メモリ削減）- 画像が小さい場合はスキップ
+        if img.width > BCF_CROP_SIZE and img.height > BCF_CROP_SIZE:
+            crop_size = BCF_CROP_SIZE
+            left = (img.width - crop_size) // 2
+            top = (img.height - crop_size) // 2
+            img = img.crop((left, top, left + crop_size, top + crop_size))
+            print(f"[INFO] 初期切り出し完了: {img.size}")
+        else:
+            print(f"[INFO] 画像サイズが小さいため初期切り出しスキップ: {img.size}")
 
-        # Step 2: タイリング＆中心切り出し
-        img = tile_and_crop(img, BCF_TILE_FACTOR, BCF_WORK_SIZE)
+        # Step 2: タイリング＆中心切り出し（作業サイズを画像サイズに合わせる）
+        work_size = min(BCF_WORK_SIZE, min(img.width, img.height))
+        img = tile_and_crop(img, BCF_TILE_FACTOR, work_size)
         print(f"[INFO] タイリング完了: {img.size}")
 
         # Step 3: シームレス化（NumPy配列に変換）
@@ -198,7 +205,7 @@ def process_pattern(code: str) -> bool:
         result_img = Image.fromarray(img_seamless)
         result_img = result_img.resize((THUMB_SIZE, THUMB_SIZE), Image.Resampling.LANCZOS)
         print(f"[INFO] 最終リサイズ完了: {THUMB_SIZE}x{THUMB_SIZE}")
-    elif code == 'BLEP' or code == 'CFC':
+    elif code == 'BLEP' or code == 'CFC' or code == 'mesh_skin':
         # BLEPとCFCは元のパターンが既にシームレスなので、シームレス化処理をスキップ
         # そのまま512x512にリサイズのみ
         if img.width >= THUMB_SIZE and img.height >= THUMB_SIZE:
