@@ -37,10 +37,10 @@ let baseImage = null;
 
 // 初期色設定（ベース画像に合わせて調整）
 const INITIAL_COLORS = {
-  A: 'BLK',    // 黒系
-  B: 'WHT',    // 白系
-  C: 'CYT',    // ベージュ系
-  D: 'MBLK'    // グレー系
+  A: 'SFC',    // 青系迷彩
+  B: 'SFC',    // 青系迷彩
+  C: 'SFC',    // 青系迷彩
+  D: 'SFC'     // 青系迷彩
 };
 
 // 現在の選択色状態
@@ -142,11 +142,8 @@ async function getTexture(code) {
 function applySwatchStyle(swatch, color) {
   swatch.style.backgroundColor = color.hex;
   if (color.kind === 'texture') {
-    // サムネイルを使用（元画像は巨大なため）
-    // 既に_thumb.pngで終わる場合はそのまま使用
-    const thumbPath = color.texturePath.endsWith('_thumb.png')
-      ? color.texturePath
-      : color.texturePath.replace('.png', '_thumb.png');
+    // テクスチャパスをそのまま使用
+    const thumbPath = color.texturePath;
     // 絶対パスに変換
     const absolutePath = new URL(thumbPath, window.location.href).href;
     swatch.style.backgroundImage = `url(${absolutePath})`;
@@ -502,16 +499,29 @@ function drawTexturePart(part, texture, color) {
   // 1. テクスチャパターンを敷き詰める
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+  // テクスチャのスケール（柄のサイズ調整）
+  const textureScale = (color.code === 'SFC' || color.code === 'BLEP' || color.code === 'LEP' || color.code === 'SFB' || color.code === 'MST') ? 0.3 : 0.5; // SFC、BLEP、LEP、SFB、MSTは元サイズの30%、他は50%
+  console.log(`テクスチャスケール: ${textureScale}, color.code: ${color.code}`);
+  const scaledWidth = texWidth * textureScale;
+  const scaledHeight = texHeight * textureScale;
+
+  // テクスチャを縮小したキャンバスを作成
+  const scaledCanvas = document.createElement('canvas');
+  scaledCanvas.width = scaledWidth;
+  scaledCanvas.height = scaledHeight;
+  const scaledCtx = scaledCanvas.getContext('2d');
+  scaledCtx.drawImage(texture, 0, 0, scaledWidth, scaledHeight);
+
   // テクスチャ画像を直接描画してタイリング（createPatternが失敗する場合のフォールバック）
   try {
-    const pattern = ctx.createPattern(texture, 'repeat');
+    const pattern = ctx.createPattern(scaledCanvas, 'repeat');
 
     if (!pattern) {
       console.error(`パターン作成失敗: ${part}、手動タイリングに切り替え`);
       // 手動タイリング
-      for (let y = 0; y < canvas.height; y += texHeight) {
-        for (let x = 0; x < canvas.width; x += texWidth) {
-          ctx.drawImage(texture, x, y);
+      for (let y = 0; y < canvas.height; y += scaledHeight) {
+        for (let x = 0; x < canvas.width; x += scaledWidth) {
+          ctx.drawImage(scaledCanvas, x, y);
         }
       }
     } else {
