@@ -202,7 +202,7 @@ async function loadImages() {
       console.error('ベース画像の読み込みに失敗:', e);
       reject(new Error('ベース画像の読み込みに失敗しました'));
     };
-    img.src = `../DRYSUITS Graphite α.png`;
+    img.src = `../parts/ベース.png`;
   });
   loadPromises.push(basePromise);
 
