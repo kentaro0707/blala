@@ -26,10 +26,21 @@ jobs:
 
       - name: Build site
         run: |
-          mkdir -p _site
-          cp -r simulator/* _site/
+          mkdir -p _site/simulator
+          cp -r simulator/* _site/simulator/
           cp -r parts _site/parts
           cp -r カラー一覧 _site/カラー一覧
+          cat > _site/index.html << 'REDIRECT'
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta http-equiv="refresh" content="0;url=simulator/">
+          </head>
+          <body>
+            <p>Redirecting to <a href="simulator/">simulator</a>...</p>
+          </body>
+          </html>
+          REDIRECT
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
