@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- GitHub Pagesの画像読み込み問題を修正: checkout ステップに `lfs: true` を追加し、Git LFS管理のPNG画像が正しくデプロイされるようにした
+- `.github/workflows/static.yml`: actions/checkout@v4 でLFSファイルを実際にダウンロードするよう変更
 - 単色選択時の色表示を修正: A, Cパーツで選択した色が暗く表示される問題を解消
 - `simulator/js/colorizer.js`: `colorizeSolid()` と `applySolidColor()` 関数を追加（陰影なしで選択色をそのまま表示）
 - `simulator/js/simulator.js`: `drawSolidColor()` 関数でA, Cパーツに `applySolidColor()` を使用するよう変更
