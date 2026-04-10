@@ -24,13 +24,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Build site
+        run: |
+          mkdir -p _site
+          cp -r simulator/* _site/
+          cp -r parts _site/parts
+          cp -r カラー一覧 _site/カラー一覧
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: 'simulator'
+          path: '_site'
 
       - name: Deploy to GitHub Pages
         id: deployment
