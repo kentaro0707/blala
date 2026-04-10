@@ -1,0 +1,2 @@
+カラー一覧/**/*.png filter=lfs diff=lfs merge=lfs -text
+parts/**/*.png filter=lfs diff=lfs merge=lfs -text

@@ -37,10 +37,10 @@ let baseImage = null;
 
 // 初期色設定（ベース画像に合わせて調整）
 const INITIAL_COLORS = {
-  A: 'SFC',    // 青系迷彩
-  B: 'SFC',    // 青系迷彩
-  C: 'SFC',    // 青系迷彩
-  D: 'SFC'     // 青系迷彩
+  A: 'BLK',    // 黒
+  B: 'BLK',    // 黒
+  C: 'BLK',    // 黒
+  D: 'BLK'     // 黒
 };
 
 // 現在の選択色状態
@@ -271,7 +271,7 @@ function createPartPaletteSection(part) {
       <p class="part-description">${partInfo.description}</p>
       <div class="selected-color-info">
         <span class="selected-color-swatch"></span>
-        <span class="selected-color-name">${initialColor.code} - ${initialColor.name}</span>
+        <span class="selected-color-name">${initialColor.code}</span>
       </div>
     </div>
     <div class="color-palette" id="palette-${part}"></div>
@@ -288,7 +288,7 @@ function createPartPaletteSection(part) {
     const button = document.createElement('button');
     button.className = 'color-button';
     button.dataset.code = color.code;
-    button.title = `${color.code} - ${color.name}`;
+    button.title = color.code;
 
     // 色見本
     const swatch = document.createElement('span');
@@ -333,7 +333,7 @@ function selectColor(part, color) {
   const swatch = partSection.querySelector('.selected-color-swatch');
   const label = partSection.querySelector('.selected-color-name');
   applySwatchStyle(swatch, color);
-  label.textContent = `${color.code} - ${color.name}`;
+  label.textContent = color.code;
 
   // プレビューを更新
   updatePreview();
@@ -459,13 +459,20 @@ function drawSolidColor(part, colorHex) {
   // 画像データを取得
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-  // Bパーツは白い部分のみ色変更（黒い線を保護）
+  // パーツごとに適切な色変換を適用
   let convertedData;
   if (part === 'B') {
+    // Bパーツは白い部分のみ色変更（黒い線を保護）
     convertedData = applyColorToWhiteParts(imageData, colorHex);
+  } else if (part === 'A' || part === 'C') {
+    // A, Cパーツは単色用の変換（陰影なし、選択色をそのまま表示）
+    convertedData = applySolidColor(imageData, colorHex);
+  } else if (part === 'D') {
+    // Dパーツはグレー部分の色変換（明るさ維持）
+    convertedData = applyColorToGrayPart(imageData, colorHex);
   } else {
-    // 他のパーツは通常の色変換（黒保護なし）
-    convertedData = applyColorToImageData(imageData, colorHex, false);
+    // その他のパーツ（A, C）は単色用の変換
+    convertedData = applySolidColor(imageData, colorHex);
   }
 
   // 変換後の画像データをオフスクリーンCanvasに描画
@@ -607,7 +614,7 @@ function resetToInitial() {
     const swatch = partSection.querySelector('.selected-color-swatch');
     const label = partSection.querySelector('.selected-color-name');
     applySwatchStyle(swatch, color);
-    label.textContent = `${color.code} - ${color.name}`;
+    label.textContent = color.code;
   });
 
   updatePreview();

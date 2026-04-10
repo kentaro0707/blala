@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- 単色選択時の色表示を修正: A, Cパーツで選択した色が暗く表示される問題を解消
+- `simulator/js/colorizer.js`: `colorizeSolid()` と `applySolidColor()` 関数を追加（陰影なしで選択色をそのまま表示）
+- `simulator/js/simulator.js`: `drawSolidColor()` 関数でA, Cパーツに `applySolidColor()` を使用するよう変更
+
 ### Added
 - CFCテクスチャ処理を追加: process_patterns.pyのPATTERNSリストにCFCを追加
 - `カラー一覧/一覧/processed/CFC_processed_thumb.png` (512x512) を生成

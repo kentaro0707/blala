@@ -138,15 +138,87 @@ function colorizeWhitePart(srcR, srcG, srcB, srcA, targetHex) {
     return { r: srcR, g: srcG, b: srcB, a: srcA };
   }
 
-  // Aパーツと同じ明るさに変換（Aパーツの平均輝度128に合わせる）
-  const adjustedBrightness = 128;
-  const intensity = 1 - (adjustedBrightness / 255);
+  // 白い部分の明るさを維持しつつ、目標色に置き換える
+  // brightnessが高い（白い）ほど、目標色を明るく表示
+  // brightnessが低い（暗い）ほど、目標色を暗く表示
+  const intensity = brightness / 255;
 
   const r = Math.round(targetRgb.r * intensity);
   const g = Math.round(targetRgb.g * intensity);
   const b = Math.round(targetRgb.b * intensity);
 
   return { r, g, b, a: srcA };
+}
+
+/**
+ * Dパーツ用：グレー部分の明るさを維持しつつ色を置き換える
+ * グレー部分（中間の明るさピクセル）を目標色に置き換え
+ *
+ * @param {number} srcR - 元のRed (0-255)
+ * @param {number} srcG - 元のGreen (0-255)
+ * @param {number} srcB - 元のBlue (0-255)
+ * @param {number} srcA - 元のAlpha (0-255)
+ * @param {string} targetHex - 目標色のHEXコード
+ * @returns {Object} {r, g, b, a} 変換後の色
+ */
+function colorizeGrayPart(srcR, srcG, srcB, srcA, targetHex) {
+  // 透過ピクセルはそのまま透過させる
+  if (srcA === 0) {
+    return { r: 0, g: 0, b: 0, a: 0 };
+  }
+
+  // 目標色のRGBを取得
+  const targetRgb = hexToRgb(targetHex);
+  if (!targetRgb) {
+    return { r: srcR, g: srcG, b: srcB, a: srcA };
+  }
+
+  // 元のピクセルの明るさを計算（0=黒、1=白）
+  const brightness = (srcR + srcG + srcB) / (3 * 255);
+
+  // グレー部分の明るさを維持しつつ、目標色に置き換える
+  // brightnessが高い（明るい）ほど、目標色を明るく表示
+  const intensity = brightness;
+
+  const r = Math.round(targetRgb.r * intensity);
+  const g = Math.round(targetRgb.g * intensity);
+  const b = Math.round(targetRgb.b * intensity);
+
+  return { r, g, b, a: srcA };
+}
+
+/**
+ * Dパーツ用：グレー部分の色変換を適用
+ * @param {ImageData} imageData - 変換対象のImageData
+ * @param {string} targetHex - 目標色のHEXコード
+ * @returns {ImageData} 変換後のImageData
+ */
+function applyColorToGrayPart(imageData, targetHex) {
+  const data = imageData.data;
+
+  let changedPixels = 0;
+
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+    const a = data[i + 3];
+
+    // 透過ピクセルはスキップ
+    if (a === 0) continue;
+
+    // 色変換を適用
+    const converted = colorizeGrayPart(r, g, b, a, targetHex);
+    data[i] = converted.r;
+    data[i + 1] = converted.g;
+    data[i + 2] = converted.b;
+    data[i + 3] = converted.a;
+    changedPixels++;
+  }
+
+  console.log(`Dパーツ色変換完了: ${changedPixels}ピクセルを変更、目標色: ${targetHex}`);
+
+  return imageData;
 }
 
 /**
@@ -186,6 +258,63 @@ function applyColorToWhiteParts(imageData, targetHex) {
   }
 
   console.log(`Bパーツ色変換完了: ${changedPixels}ピクセルを変更、${protectedPixels}ピクセル（黒線）を保護、目標色: ${targetHex}`);
+
+  return imageData;
+}
+
+/**
+ * 単色選択用：選択した色をそのまま表示（陰影なし）
+ * シルエットの形だけを使用し、色は選択色をそのまま適用
+ *
+ * @param {number} srcR - 元のRed (0-255)
+ * @param {number} srcG - 元のGreen (0-255)
+ * @param {number} srcB - 元のBlue (0-255)
+ * @param {number} srcA - 元のAlpha (0-255)
+ * @param {string} targetHex - 目標色のHEXコード
+ * @returns {Object} {r, g, b, a} 変換後の色
+ */
+function colorizeSolid(srcR, srcG, srcB, srcA, targetHex) {
+  if (srcA === 0) {
+    return { r: 0, g: 0, b: 0, a: 0 };
+  }
+
+  const targetRgb = hexToRgb(targetHex);
+  if (!targetRgb) {
+    return { r: srcR, g: srcG, b: srcB, a: srcA };
+  }
+
+  // 不透明ピクセルには選択色をそのまま適用（陰影なし）
+  return {
+    r: targetRgb.r,
+    g: targetRgb.g,
+    b: targetRgb.b,
+    a: srcA
+  };
+}
+
+/**
+ * 単色選択用：Canvas全体に単色を適用（陰影なし）
+ * @param {ImageData} imageData - 変換対象のImageData
+ * @param {string} targetHex - 目標色のHEXコード
+ * @returns {ImageData} 変換後のImageData
+ */
+function applySolidColor(imageData, targetHex) {
+  const data = imageData.data;
+
+  let changedPixels = 0;
+
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i + 3] === 0) continue; // 透過ピクセルはスキップ
+
+    const converted = colorizeSolid(data[i], data[i + 1], data[i + 2], data[i + 3], targetHex);
+    data[i] = converted.r;
+    data[i + 1] = converted.g;
+    data[i + 2] = converted.b;
+    data[i + 3] = converted.a;
+    changedPixels++;
+  }
+
+  console.log(`単色変換完了: ${changedPixels}ピクセルを変更、目標色: ${targetHex}`);
 
   return imageData;
 }
